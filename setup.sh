@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+#set -e
 
 source /cvmfs/cms.cern.ch/cmsset_default.sh
 

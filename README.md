@@ -17,11 +17,18 @@ Once installed, you should have the `docker` command available from the command 
 > Note, if using a new Mac with Apple Silicon, you may get better performance from enabling:
 https://levelup.gitconnected.com/docker-on-apple-silicon-mac-how-to-run-x86-containers-with-rosetta-2-4a679913a0d5
 
-TODO: run image, how to see files
+To download and run the docker image:
 
-### Download this repository
+```sh
+docker run --cap-add SYS_ADMIN --device /dev/fuse -it gitlab-registry.cern.ch/agilbert/eft-exercise-docker:snapshot /bin/bash
+```
 
-Either from your AFS area on lxplus, or inside the docker image created above, clone this repository:
+The software needed for the exercise is already installed in the image, within the `EFT-HandsOn` directory.
+Instructions for setting up the software on lxplus are given below.
+
+### lxplus
+
+First clone this repository somewhere:
 
 ```sh
 git clone https://github.com/ajgilbert/EFT-HandsOn.git
@@ -42,3 +49,45 @@ Once the installation is complete, we will source the `setup.sh` script to set a
 ```sh
 source setup.sh
 ```
+
+### Install the SMEFTsim models
+
+```sh
+./scripts/setup_model_SMEFTsim3.sh
+```
+
+If we now look inside the Madgraph `models` directory, we'll see the different variants of the SMEFTsim model:
+
+```sh
+ls -1 MG5_aMC_v2_6_7/models/
+SMEFTsim_MFV_MwScheme_UFO
+SMEFTsim_MFV_alphaScheme_UFO
+SMEFTsim_U35_MwScheme_UFO
+SMEFTsim_U35_alphaScheme_UFO
+SMEFTsim_general_MwScheme_UFO
+SMEFTsim_general_alphaScheme_UFO
+SMEFTsim_topU3l_MwScheme_UFO
+SMEFTsim_topU3l_alphaScheme_UFO
+SMEFTsim_top_MwScheme_UFO
+SMEFTsim_top_alphaScheme_UFO
+[...]
+```
+
+### Generate a process
+
+Create `cards/Higgs-VBF/proc_card.dat`:
+
+```
+import model SMEFTsim_topU3l_MwScheme_UFO-massless
+
+define e = e+ e-
+define mu = mu+ mu-
+
+generate p p > h j j $$ w+ w- z a QCD=0 NP<=1, h > e mu vl vl~ NP=0
+
+output Higgs-VBF
+```
+
+<!-- ###
+
+We will base our analysis on the H->WW: https://cms-results.web.cern.ch/cms-results/public-results/publications/HIG-20-013/index.html  -->
