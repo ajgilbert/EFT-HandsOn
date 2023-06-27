@@ -272,9 +272,33 @@ The `--draw` options supports multiple arguments of the form: `[param1]=[val1],[
 
 ## EFT fits
 
+Once a good observable has been identified, we can move on to performing fits. In this section we will work mostly with the script `eftfit.py`. Have a look through the script, which has comments explaining each step.
+
+Before we actually do any fitting, we have to approximate a measurement of the distribution. While normally we would do this by generating signal and background events, applying detector simulation, and building a full statistical model, in this exercise we will take some shortcuts. 
+
+Instead we will use the SM predicted distribution from the `get_scaling.py` output above to get the number of expected signal events per bin (assuming full Run 2 int. luminosity). Then we will approximate the S/B ratio using previous H->WW analyses of the VBF process, to give us the statistical uncertainty. We will also add a systematic uncertainty as a fixed fraction of the background events (neglecting systematics on the signal).
+
+With all of this, we can define a covariance matrix for a hypothetical measurement of the differential cross section.
+
+*Work through this part of the `eftfit.py` script, checking that all pieces that go into the calculation are reasonable.*
+
+At this point, we can construct the multivariate Gaussian PDF, and build the negative log-likelihood object. A function `RunFits` is defined, which will use Minuit2 to find the best-fit parameter values. In the default state, these should all be zero, as we define the "data" to correspond to the SM expectation (1.0 for each bin).
+
+*Try changing the data RooRealVars to different values, and verify that non-zero values of the coefficients are returned in the fit.*
+
+The `RunFits` function also has an option to perform likelihood scans, which can be used to extract precise confidence intervals (in the asymptotic approximation). The fits can run in two possible configurations: one with all parameters floating freely, in which during a scan for one parameter we say the others are "profiled"; and one where only one parameter at a time is floating, and all others are fixed to zero. How do the uncertainties compare in the two cases?
+
+In general we would prefer to have all parameters floating, as the resulting constraints will be the most generic. In practice this does not always work, because of the presence of flat direction in the likelihood (i.e. two parameters, or two linear combinations of parameters, that correspond to the same degree of freedom).
+
+*The script should print the correlation matrix calculated from the Hessian - do you see any evidence of flat directions?*
+
+The scan output files produced by the script can be plotted using the `plot1DScan.py` script (which can also be used to plot the likelihood scans from `combine`). Example usage:
 
 ```sh
-
 for POI in chb chbox chdd chw chwb; do python ./plot1DScan.py -m scan_test_${POI}.root --POI ${POI} --translate translate_root_SMEFTsim3.json --output nll_scan_${P
 OI} --model eft --json eft_scans.json --no-input-label --chop 100 --y-max 30 --remove-near-min 0.8; done
 ```
+
+Tasks:
+ - It is useful to compare the constraints with and without the inclusion of the terms quadratic in the Wilson coefficients. Ideally, we would be in a situation where our limits do not change significantly between these two cases, as it could imply we would not be sensitive to possible missing contributions at Lambda^-2 order. What is the situation here?
+ - In the linear-only case, try performing a "principal component analysis" (see the slides for details). This involves constructing what's called the Fisher information matrix. We start with the covariance matrix (C), which we invert, and then we apply the linear transformation matrix (P) from both sides: P^T C^-1 P, where P is the Nbins * Nparams matrix of the A_i values. From the resulting matrix you can perform an eigenvalue decomposition, which identifies the linear combinations of Wilson coefficients that can be constrained the strongest.

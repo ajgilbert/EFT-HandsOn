@@ -51,16 +51,12 @@ cov = cov_syst + cov_stat
 # It will be convenient to store objects inside a RooWorkspace
 wsp = ROOT.RooWorkspace()
 
-# xvars/x_arglist:   initially the free parameters for the fid. bins, that 
-#                    will then be redefined as functions of the STXS parameters
-# muvars/mu_arglist: The "global observables", representing the measured values
-
 # We need two RooArgLists - one will contain objects representing the signal strengths
 # as a function of the Wilson coefficients
-x_arglist = ROOT.RooArgList()
+mu_arglist = ROOT.RooArgList()
 # The other is a list of constants to represent the "measured" values of the signal strengths
 # In this case they will all be 1.0 - i.e. the SM
-mu_arglist = ROOT.RooArgList()
+x_arglist = ROOT.RooArgList()
 
 # This returns a list of parameter names, e.g. ["chw", "chdd", ...]
 params = eft_scaling.parameters()
@@ -87,8 +83,8 @@ for i in range(N):
 
     # Now create the measured value, just a constant
     wsp.factory("measured_{}[1.]".format(i))
-    x_arglist.add(wsp.function("scale_{}".format(i)))
-    mu_arglist.add(wsp.var("measured_{}".format(i)))
+    mu_arglist.add(wsp.function("scale_{}".format(i)))
+    x_arglist.add(wsp.var("measured_{}".format(i)))
 wsp.allFunctions().Print("v")
 
 # Now we will build our PDF as a multi-variate Gaussian. We have to convert
@@ -98,12 +94,12 @@ for i in range(N):
     for j in range(N):
         root_cov[i][j] = cov[i][j]
 
-pdf = ROOT.RooMultiVarGaussian('pdf', '', x_arglist, mu_arglist, root_cov)
+pdf = ROOT.RooMultiVarGaussian('pdf', '', mu_arglist, x_arglist, root_cov)
 
 # We need to make a kind of fake "data" to form the likelihood, this is just
 # a data set with a single point (corresponding to each measured bin = 1)
-dat = ROOT.RooDataSet('global_obs', '', mu_arglist)
-dat.add(mu_arglist)
+dat = ROOT.RooDataSet('global_obs', '', x_arglist)
+dat.add(x_arglist)
 
 # Now create the NLL function
 nll = pdf.createNLL(dat)
